@@ -3,6 +3,7 @@ import { Card, Typography, Button } from 'antd';
 import { ShoppingCartOutlined, PictureOutlined } from '@ant-design/icons';
 import Image from 'next/image';
 import { FoodItem } from '@/types';
+import { useCart } from '@/app/(user)/products/_components/CartContext';
 
 interface FoodCardProps {
   food: FoodItem;
@@ -20,6 +21,7 @@ const isValidImageUrl = (url?: string): boolean => {
 
 const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
   const hasValidImage = isValidImageUrl(food.image);
+  const { addToCart } = useCart();
 
   return (
     <Card
@@ -62,7 +64,7 @@ const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
             {food.quantity}
           </Typography.Paragraph>
         )}
-        
+
         {food.description && (
           <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }}>
             {food.description}
@@ -80,8 +82,9 @@ const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
           danger
           icon={<ShoppingCartOutlined />}
           style={{ width: '100%', marginTop: 16 }}
+          onClick={() => addToCart(food)} // <-- GỌI HÀM ADDTOCART KHI CLICK
         >
-          Đặt Hàng
+          Đặt Món
         </Button>
       </div>
     </Card>

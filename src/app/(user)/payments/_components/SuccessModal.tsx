@@ -1,0 +1,30 @@
+"use client";
+
+import React from 'react';
+import { useRouter } from 'next/navigation';
+
+interface SuccessModalProps {
+  show: boolean;
+}
+
+const SuccessModal: React.FC<SuccessModalProps> = ({ show }) => {
+  const router = useRouter();
+
+  if (!show) {
+    return null;
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>Đặt đồ ăn thành công!</h2>
+        <p>Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn đang được chuẩn bị.</p>
+        <button onClick={() => router.push('/order-history')}> 
+          Xem lịch sử đơn hàng
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default SuccessModal;

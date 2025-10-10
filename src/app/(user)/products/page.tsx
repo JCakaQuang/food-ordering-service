@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Spin, Alert, FloatButton, Typography } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
-import FoodCard from '@/components/FoodCard';
+import FoodCard from '@/app/(user)/products/_components/FoodCard';
 import { FoodItem } from '@/types';
 import Navigation from '@/components/Navigation';
 import ContentWrapper from '@/components/ContentWrapper';
 import Footerapp from '@/components/Footer';
+import { useCart } from '@/app/(user)/products/_components/CartContext'; // Import useCart
+import CartDrawer from '@/app/(user)/products/_components/CartDrawer'; // Import CartDrawer
 
 const { Title } = Typography;
 
@@ -16,6 +18,8 @@ const FoodPage: React.FC = () => {
     const [foods, setFoods] = useState<FoodItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const { totalItems } = useCart(); // Lấy tổng số món hàng
+    const [cartOpen, setCartOpen] = useState(false);
 
     useEffect(() => {
         const fetchFoods = async () => {
@@ -74,9 +78,13 @@ const FoodPage: React.FC = () => {
                 <FloatButton
                     icon={<ShoppingCartOutlined />}
                     type="primary"
-                    badge={{ count: 1, color: 'red' }} // Ví dụ có 1 món trong giỏ
+                    badge={{ count: totalItems, color: 'red' }} // Hiển thị số lượng động
                     tooltip="Xem giỏ hàng"
+                    onClick={() => setCartOpen(true)} // Mở giỏ hàng khi click
                 />
+
+                {/* Thêm component CartDrawer */}
+                <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
             </ContentWrapper>
 
             <Footerapp />
