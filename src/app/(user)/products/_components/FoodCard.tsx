@@ -71,11 +71,9 @@ const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
           Số lượng còn lại: {food.quantity}
         </Typography.Paragraph>
 
-        {food.description && (
-          <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }}>
-            {food.description}
-          </Typography.Paragraph>
-        )}
+        <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }}>
+          {food.description || 'Món ăn đặc sắc'}
+        </Typography.Paragraph>
       </div>
 
       <div>
