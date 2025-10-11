@@ -8,8 +8,8 @@ import { FoodItem } from '@/types';
 import Navigation from '@/components/Navigation';
 import ContentWrapper from '@/components/ContentWrapper';
 import Footerapp from '@/components/Footer';
-import { useCart } from '@/app/(user)/products/_components/CartContext'; // Import useCart
-import CartDrawer from '@/app/(user)/products/_components/CartDrawer'; // Import CartDrawer
+import { useCart } from '@/app/(user)/orders/_components/CartContext'; // Import useCart
+import CartDrawer from '@/app/(user)/orders/_components/CartDrawer'; // Import CartDrawer
 
 const { Title } = Typography;
 
@@ -57,7 +57,7 @@ const FoodPage: React.FC = () => {
     }
 
     return (
-        <div style={{ padding: '50px' }}>
+        <div style={{ padding: '2rem' }}>
             <Navigation></Navigation>
 
             <ContentWrapper>

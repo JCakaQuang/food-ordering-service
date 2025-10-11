@@ -12,16 +12,16 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@ant-design/nextjs-registry": "^1.1.0",
-    "@types/react-router-dom": "^5.3.3",
-    "antd": "^5.27.4",
+    "@ant-design/nextjs-registry": "1.1.0",
+    "@types/react-router-dom": "5.3.3",
+    "antd": "5.27.4",
     "next": "15.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-router-dom": "^7.9.4"
+    "react-router-dom": "7.9.4"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
+    "@eslint/eslintrc": "3",
     "@types/node": "24.5.2",
     "@types/react": "19.1.14",
     "@types/react-dom": "19.1.9",

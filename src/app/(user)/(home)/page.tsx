@@ -4,14 +4,14 @@ import Footerapp from "@/components/Footer";
 
 export default function Home() {
   return (
-    <div>
+    <div style={{ padding: '2rem' }}>
       <Navigation />
 
       <ContentWrapper>
         <h1>Home Page</h1>
       </ContentWrapper>
 
-      {/* <Footerapp /> */}
+      <Footerapp />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Card, Typography, Button } from 'antd';
+
+import { Card, Typography, Button, Tag } from 'antd'; 
 import { ShoppingCartOutlined, PictureOutlined } from '@ant-design/icons';
 import Image from 'next/image';
 import { FoodItem } from '@/types';
-import { useCart } from '@/app/(user)/products/_components/CartContext';
+import { useCart } from '@/app/(user)/orders/_components/CartContext'; 
 
 interface FoodCardProps {
   food: FoodItem;
@@ -13,7 +14,6 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
-// Hàm kiểm tra xem URL có hợp lệ không
 const isValidImageUrl = (url?: string): boolean => {
   if (!url) return false;
   return url.startsWith('http') || url.startsWith('/');
@@ -23,11 +23,12 @@ const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
   const hasValidImage = isValidImageUrl(food.image);
   const { addToCart } = useCart();
 
+  const isOutOfStock = (food.quantity ?? 0) <= 0;
+
   return (
     <Card
       hoverable
-      style={{ width: '100%', display: 'flex', flexDirection: 'column' }}
-      // SỬA LỖI 1: Đổi bodyStyle thành styles.body
+      style={{ width: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}
       styles={{
         body: {
           flex: 1,
@@ -37,15 +38,14 @@ const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
         },
       }}
       cover={
-        // SỬA LỖI 2: Kiểm tra URL hợp lệ trước khi dùng next/image
         hasValidImage ? (
           <Image
             alt={food.name}
-            src={food.image!} // Dấu ! để báo cho TypeScript rằng chúng ta đã kiểm tra
+            src={food.image!}
             width={500}
             height={300}
             style={{ objectFit: 'cover' }}
-            priority // Thêm priority cho ảnh ở màn hình đầu tiên để tải nhanh hơn
+            priority
           />
         ) : (
           <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f2f5' }}>
@@ -54,16 +54,22 @@ const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
         )
       }
     >
+      {/* <-- BƯỚC 2: HIỂN THỊ TAG "HẾT HÀNG" NẾU isOutOfStock LÀ TRUE */}
+      {isOutOfStock && (
+        <Tag color="red" style={{ position: 'absolute', top: 16, right: 16 }}>
+          Hết hàng
+        </Tag>
+      )}
+
       <div>
         <Typography.Title level={5} style={{ minHeight: 48 }}>
           {food.name}
         </Typography.Title>
-
-        {food.quantity && (
-          <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }}>
-            {food.quantity}
-          </Typography.Paragraph>
-        )}
+        
+        {/* Cải thiện hiển thị số lượng tồn kho */}
+        <Typography.Paragraph type="secondary">
+          Số lượng còn lại: {food.quantity}
+        </Typography.Paragraph>
 
         {food.description && (
           <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }}>
@@ -82,9 +88,12 @@ const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
           danger
           icon={<ShoppingCartOutlined />}
           style={{ width: '100%', marginTop: 16 }}
-          onClick={() => addToCart(food)} // <-- GỌI HÀM ADDTOCART KHI CLICK
+          onClick={() => addToCart(food)}
+          // <-- BƯỚC 3: VÔ HIỆU HÓA NÚT NẾU HẾT HÀNG
+          disabled={isOutOfStock}
         >
-          Đặt Món
+          {/* <-- BƯỚC 4: THAY ĐỔI NỘI DUNG NÚT NẾU HẾT HÀNG */}
+          {isOutOfStock ? "Hết hàng" : "Đặt Món"}
         </Button>
       </div>
     </Card>

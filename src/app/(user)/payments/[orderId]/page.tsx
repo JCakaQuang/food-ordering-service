@@ -6,6 +6,7 @@ import OrderSummary from '@/app/(user)/payments/_components/OrderSummary';
 import PaymentActions from '@/app/(user)/payments/_components/PaymentActions';
 import SuccessModal from '@/app/(user)/payments/_components/SuccessModal';
 import { Order } from '@/types';
+import Navigation from '@/components/Navigation';
 
 const PaymentPage: React.FC = () => {
   // Dùng `useParams` một lần và lấy orderId từ đó
@@ -102,6 +103,7 @@ const PaymentPage: React.FC = () => {
 
   return (
     <div className="payment-page">
+      <Navigation></Navigation>
       <h1>Xác nhận Thanh toán</h1>
       <OrderSummary order={order} />
       <PaymentActions
@@ -109,7 +111,7 @@ const PaymentPage: React.FC = () => {
         isLoading={isLoading}
       />
       {error && <p className="error-message">{error}</p>}
-      <SuccessModal show={showSuccessModal} />
+      <SuccessModal show={showSuccessModal} orderId={orderId}/>
     </div>
   );
 };

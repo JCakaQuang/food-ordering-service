@@ -21,9 +21,14 @@ const navLinks = [
   },
   {
     key: '3',
-    label: 'Giới thiệu',
-    path: '/about',
+    label: 'Lịch sử đặt hàng',
+    path: '/orders/order-history',
   },
+  {
+    key: '4',
+    label: 'Lịch sử thanh toán',
+    path: '/payments/payment-history',
+  }
 ];
 
 // 2. Chuyển đổi dữ liệu để bọc label trong component <Link>

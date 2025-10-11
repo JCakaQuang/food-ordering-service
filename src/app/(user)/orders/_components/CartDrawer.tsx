@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Drawer, List, Button, Typography, Avatar, message } from 'antd';
-import { useCart } from '@/app/(user)/products/_components/CartContext';
-import { useRouter } from 'next/navigation'; // Import useRouter để chuyển trang
+import { useCart } from '@/app/(user)/orders/_components/CartContext';
+import { useRouter } from 'next/navigation';
 
 const { Title } = Typography;
 
@@ -28,8 +28,12 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
     setIsCheckingOut(true);
 
     try {
+      //giả sử user_id tạm thời
+      // BƯỚC 1: TẠO ĐƠN HÀNG MỚI
+      // Giả sử user_id tạm thời
+      // Thay "68e004f60d56f0110c818361" bằng ID người dùng thực tế từ hệ thống đăng nhập
       const orderData = {
-        user_id: "68e7099ad296e2b9139f75dd",
+        user_id: "68e004f60d56f0110c818361",
         status: "pending",
         total_price: totalPrice,
       };

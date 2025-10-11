@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
-import { CartProvider } from '@/app/(user)/products/_components/CartContext'; // Import CartProvider
+import { CartProvider } from '@/app/(user)/orders/_components/CartContext'; // Import CartProvider
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   
