@@ -51,10 +51,15 @@ const MenuPage = () => {
             setIsLoadingProducts(true);
             try {
                 const response = await fetch(`http://localhost:8080/api/v1/foods?foodtype_id=${selectedFoodtypeId}`);
+                // Chỉ throw error khi có lỗi server hoặc mạng
+                if (!response.ok) {
+                    throw new Error("Không thể tải danh sách sản phẩm.");
+                }
                 const result = await response.json();
+                // Luôn setProducts, dù result.data là mảng rỗng
                 setProducts(result.data);
-            } catch (error) {
-                message.error("Không thể tải danh sách sản phẩm.");
+            } catch (error: any) { // <-- Khối catch này bây giờ chỉ xử lý lỗi thực sự
+                message.error(error.message);
             } finally {
                 setIsLoadingProducts(false);
             }
@@ -93,7 +98,7 @@ const MenuPage = () => {
                                     <Col key={food._id} xs={24} sm={12} md={8} lg={6}>
                                         <FoodCard food={food} />
                                     </Col>
-                                )) : <p>Không có sản phẩm nào trong danh mục này.</p>}
+                                )) : (<p>Không có sản phẩm nào trong danh mục này.</p>)}
                             </Row>
                         )}
                     </Content>

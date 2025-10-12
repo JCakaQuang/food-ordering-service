@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { CartProvider } from '@/app/(user)/orders/_components/CartContext'; // Import CartProvider
+import { StyleProvider } from '@ant-design/cssinjs';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   
@@ -11,8 +12,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     // Bọc children trong CartProvider
-    <CartProvider>
-      {children}
-    </CartProvider>
+    <StyleProvider>
+      <CartProvider>
+        {children}
+      </CartProvider>
+    </StyleProvider>
   );
 }

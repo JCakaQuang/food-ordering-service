@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, message, Popconfirm, Image } from 'antd';
+import { Table, Button, Space, message, Popconfirm, Image, App, TableProps, TablePaginationConfig } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 
@@ -16,15 +16,30 @@ interface Product {
 const ProductListPage = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { message } = App.useApp();
 
-    const fetchData = async () => {
+    const [pagination, setPagination] = useState<TablePaginationConfig>({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+    });
+
+    const fetchData = async (paginationParams: TablePaginationConfig = {}) => {
         setIsLoading(true);
+        const { current = 1, pageSize = 10 } = paginationParams;
         try {
-            const response = await fetch('http://localhost:8080/api/v1/foods');
+            const response = await fetch(`http://localhost:8080/api/v1/foods?current=${current}&pageSize=${pageSize}`);
             const result = await response.json();
             setProducts(result.data);
-        } catch (error) {
-            message.error("Không thể tải danh sách sản phẩm.");
+
+            setPagination(prev => ({
+                ...prev,
+                current: result.meta.current,
+                pageSize: result.meta.pageSize,
+                total: result.meta.total,
+            }));
+        } catch (error: any) {
+            message.error(error.message || "Không thể tải danh sách sản phẩm.");
         } finally {
             setIsLoading(false);
         }
@@ -45,6 +60,13 @@ const ProductListPage = () => {
         } catch (error: any) {
             message.error(error.message);
         }
+    };
+
+    const handleTableChange: TableProps<Product>['onChange'] = (newPagination) => {
+        fetchData({
+            current: newPagination.current,
+            pageSize: newPagination.pageSize,
+        });
     };
 
     const columns = [
@@ -86,7 +108,9 @@ const ProductListPage = () => {
                     <Button type="primary" icon={<PlusOutlined />}>Thêm sản phẩm</Button>
                 </Link>
             </div>
-            <Table columns={columns} dataSource={products} rowKey="_id" loading={isLoading} />
+            <Table columns={columns} dataSource={products} rowKey="_id" loading={isLoading} 
+                pagination={pagination}
+                onChange={handleTableChange}/>
         </div>
     );
 };

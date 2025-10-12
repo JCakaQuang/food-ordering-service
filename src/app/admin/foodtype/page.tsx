@@ -3,15 +3,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, message, Popconfirm } from 'antd';
+import { Table, Button, Space, message, Popconfirm, TablePaginationConfig, TableProps } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 interface FoodType {
-  _id: string;
-  name: string;
-  description: string;
+    _id: string;
+    name: string;
+    description: string;
 }
 
 const FoodtypeListPage = () => {
@@ -19,12 +19,26 @@ const FoodtypeListPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
 
-    const fetchData = async () => {
+    const [pagination, setPagination] = useState<TablePaginationConfig>({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+    });
+
+    const fetchData = async (paginationParams: TablePaginationConfig = {}) => {
         setIsLoading(true);
+        const { current = 1, pageSize = 10 } = paginationParams;
         try {
-            const response = await fetch('http://localhost:8080/api/v1/foodtype'); // API lấy danh sách
+            const response = await fetch(`http://localhost:8080/api/v1/foodtype?current=${current}&pageSize=${pageSize}`); // API lấy danh sách
             const result = await response.json();
             setFoodtypes(result.data);
+
+            setPagination(prev => ({
+                ...prev,
+                current: result.meta.current,
+                pageSize: result.meta.pageSize,
+                total: result.meta.total,
+            }));
         } catch (error) {
             message.error("Không thể tải danh sách.");
         } finally {
@@ -48,6 +62,13 @@ const FoodtypeListPage = () => {
             message.error(error.message);
         }
     };
+
+    const handleTableChange: TableProps<FoodType>['onChange'] = (newPagination) => {
+            fetchData({
+                current: newPagination.current,
+                pageSize: newPagination.pageSize,
+            });
+        };
 
     const columns = [
         { title: 'Tên loại', dataIndex: 'name', key: 'name' },
@@ -81,11 +102,13 @@ const FoodtypeListPage = () => {
                     <Button type="primary" icon={<PlusOutlined />}>Thêm mới</Button>
                 </Link>
             </div>
-            <Table 
-              columns={columns} 
-              dataSource={foodtypes} 
-              rowKey="_id" 
-              loading={isLoading} 
+            <Table
+                columns={columns}
+                dataSource={foodtypes}
+                rowKey="_id"
+                loading={isLoading}
+                pagination={pagination}
+                onChange={handleTableChange}
             />
         </div>
     );

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import ClientLayout from "@/components/ClientLayout"; // Import component client mới
+import ClientLayout from "@/components/ClientLayout";
+
+// import { AntdRegistry } from '@ant-design/nextjs-registry';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,10 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        {/* Bọc children trong component client mới */}
-        <ClientLayout>
-          {children}
-        </ClientLayout>
+          <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

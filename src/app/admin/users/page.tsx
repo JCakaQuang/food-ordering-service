@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, message, Popconfirm, Tag } from 'antd';
+import { Table, Button, Space, message, Popconfirm, Tag, TablePaginationConfig, TableProps } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 
@@ -16,12 +16,25 @@ const UserListPage = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchData = async () => {
+    const [pagination, setPagination] = useState<TablePaginationConfig>({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+    });
+    const fetchData = async (paginationParams: TablePaginationConfig = {}) => {
         setIsLoading(true);
+        const { current = 1, pageSize = 10 } = pagination;
         try {
-            const response = await fetch('http://localhost:8080/api/v1/users');
+            const response = await fetch(`http://localhost:8080/api/v1/users?current=${current}&pageSize=${pageSize}`);
             const result = await response.json();
             setUsers(result.data);
+
+            setPagination(prev => ({
+                ...prev,
+                current: result.meta.current,
+                pageSize: result.meta.pageSize,
+                total: result.meta.total,
+            }));
         } catch (error) {
             message.error("Không thể tải danh sách người dùng.");
         } finally {
@@ -42,6 +55,13 @@ const UserListPage = () => {
         } catch (error: any) {
             message.error(error.message);
         }
+    };
+
+    const handleTableChange: TableProps<User>['onChange'] = (newPagination) => {
+        fetchData({
+            current: newPagination.current,
+            pageSize: newPagination.pageSize,
+        });
     };
 
     const columns = [
@@ -72,7 +92,13 @@ const UserListPage = () => {
                     <Button type="primary" icon={<PlusOutlined />}>Thêm người dùng</Button>
                 </Link>
             </div>
-            <Table columns={columns} dataSource={users} rowKey="_id" loading={isLoading} />
+            <Table columns={columns} 
+            dataSource={users} 
+            rowKey="_id" 
+            loading={isLoading} 
+            pagination={pagination}
+            onChange={handleTableChange}
+            />
         </div>
     );
 };
