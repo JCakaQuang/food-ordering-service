@@ -87,10 +87,8 @@ const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
           icon={<ShoppingCartOutlined />}
           style={{ width: '100%', marginTop: 16 }}
           onClick={() => addToCart(food)}
-          // <-- BƯỚC 3: VÔ HIỆU HÓA NÚT NẾU HẾT HÀNG
           disabled={isOutOfStock}
         >
-          {/* <-- BƯỚC 4: THAY ĐỔI NỘI DUNG NÚT NẾU HẾT HÀNG */}
           {isOutOfStock ? "Hết hàng" : "Đặt Món"}
         </Button>
       </div>

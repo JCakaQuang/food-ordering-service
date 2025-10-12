@@ -18,7 +18,7 @@ const FoodPage: React.FC = () => {
     const [foods, setFoods] = useState<FoodItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const { totalItems } = useCart(); // Lấy tổng số món hàng
+    const { totalItems } = useCart();
     const [cartOpen, setCartOpen] = useState(false);
 
     useEffect(() => {
@@ -46,7 +46,7 @@ const FoodPage: React.FC = () => {
         };
 
         fetchFoods();
-    }, []);// Mảng rỗng đảm bảo useEffect chỉ chạy 1 lần
+    }, []);
 
     if (loading) {
         return <Spin size="large" style={{ display: 'block', marginTop: '20%' }} />;
@@ -62,11 +62,10 @@ const FoodPage: React.FC = () => {
 
             <ContentWrapper>
                 <Title level={2} style={{ textAlign: 'center', marginBottom: 40 }}>
-                    Thực đơn hấp dẫn
+                    Danh Sách Món Ăn
                 </Title>
 
                 <Row gutter={[24, 24]}>
-                    {/* 2. Thêm điều kiện kiểm tra Array.isArray() trước khi map */}
                     {Array.isArray(foods) && foods.map((food) => (
                         <Col key={food._id} xs={24} sm={12} md={8} lg={6}>
                             <FoodCard food={food} />
@@ -83,7 +82,6 @@ const FoodPage: React.FC = () => {
                     onClick={() => setCartOpen(true)} // Mở giỏ hàng khi click
                 />
 
-                {/* Thêm component CartDrawer */}
                 <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
             </ContentWrapper>
 

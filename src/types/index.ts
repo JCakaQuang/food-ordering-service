@@ -23,3 +23,9 @@ export interface Order {
   items: OrderItem[];
   total_price: number;
 }
+
+export interface FoodType {
+  _id: string;
+  name: string;
+  description: string;
+}

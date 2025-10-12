@@ -21,11 +21,16 @@ const navLinks = [
   },
   {
     key: '3',
+    label: 'Danh mục sản phẩm',
+    path: '/foodtype',
+  },
+  {
+    key: '4',
     label: 'Lịch sử đặt hàng',
     path: '/orders/order-history',
   },
   {
-    key: '4',
+    key: '5',
     label: 'Lịch sử thanh toán',
     path: '/payments/payment-history',
   }

@@ -15,7 +15,7 @@ const formatCurrency = (value: number) => {
 };
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
-  const { cartItems, clearCart, totalPrice } = useCart();
+  const { cartItems, clearCart, totalPrice, removeFromCart } = useCart();
   const router = useRouter(); // Khởi tạo router
   const [isCheckingOut, setIsCheckingOut] = useState(false); // State để xử lý loading
 
@@ -28,10 +28,6 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
     setIsCheckingOut(true);
 
     try {
-      //giả sử user_id tạm thời
-      // BƯỚC 1: TẠO ĐƠN HÀNG MỚI
-      // Giả sử user_id tạm thời
-      // Thay "68e004f60d56f0110c818361" bằng ID người dùng thực tế từ hệ thống đăng nhập
       const orderData = {
         user_id: "68e004f60d56f0110c818361",
         status: "pending",
@@ -88,10 +84,6 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
       setIsCheckingOut(false);
     }
   };
-
-  function removeFromCart(_id: string): void {
-    throw new Error('Function not implemented.');
-  }
 
   return (
     <Drawer
