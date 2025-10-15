@@ -29,6 +29,7 @@ const UpdateFoodtypePage = () => {
     }, [id]);
 
     const handleUpdate = async (values: any) => {
+        console.log('Attempting to update with values:', values);
         setIsSubmitting(true);
         try {
             const response = await fetch(`http://localhost:8080/api/v1/foodtype/${id}`, {

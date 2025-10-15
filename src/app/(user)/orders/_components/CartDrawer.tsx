@@ -1,25 +1,34 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Drawer, List, Button, Typography, Avatar, message } from 'antd';
 import { useCart } from '@/app/(user)/orders/_components/CartContext';
+import { useAuth } from '@/app/context/AuthContext'; // <--- BƯỚC 1: IMPORT USEAUTH
 import { useRouter } from 'next/navigation';
+import axios from 'axios'; // Dùng axios cho nhất quán
 
 const { Title } = Typography;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
-interface CartDrawerProps {
-  open: boolean;
-  onClose: () => void;
-}
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
-const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
+const CartDrawer: React.FC<{ open: boolean; onClose: () => void; }> = ({ open, onClose }) => {
   const { cartItems, clearCart, totalPrice, removeFromCart } = useCart();
-  const router = useRouter(); // Khởi tạo router
-  const [isCheckingOut, setIsCheckingOut] = useState(false); // State để xử lý loading
+  const { user } = useAuth(); // <--- BƯỚC 2: LẤY THÔNG TIN USER TỪ CONTEXT
+  const router = useRouter();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const handleCheckout = async () => {
+    // Thêm kiểm tra: Nếu chưa đăng nhập, yêu cầu đăng nhập
+    if (!user) {
+      message.warning('Vui lòng đăng nhập để tiếp tục thanh toán!');
+      router.push('/auth/login');
+      return;
+    }
+    
     if (cartItems.length === 0) {
       message.error("Giỏ hàng của bạn đang trống!");
       return;
@@ -29,29 +38,19 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
 
     try {
       const orderData = {
-        user_id: "68e004f60d56f0110c818361",
+        user_id: user._id, // <--- BƯỚC 3: SỬ DỤNG ID CỦA USER ĐANG ĐĂNG NHẬP
         status: "pending",
         total_price: totalPrice,
       };
 
-      const orderResponse = await fetch('http://localhost:8080/api/v1/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
-      });
-
-      if (!orderResponse.ok) throw new Error('Tạo đơn hàng thất bại.');
-
-      const newOrder = await orderResponse.json();
-
+      const orderResponse = await axios.post(`${API_URL}/order`, orderData);
+      const newOrder = orderResponse.data as { _id: string };
       const order_id = newOrder._id;
-
-      // Kiểm tra để chắc chắn có order_id
+      
       if (!order_id) {
         throw new Error('Không nhận được ID đơn hàng từ phản hồi của API.');
       }
 
-      // BƯỚC 2: TẠO CÁC ORDER DETAILS (Giữ nguyên)
       const orderDetailPromises = cartItems.map(item => {
         const orderDetailData = {
           order_id: order_id,
@@ -59,27 +58,18 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ open, onClose }) => {
           quantity: item.quantity,
           price: item.price || 0,
         };
-        return fetch('http://localhost:8080/api/v1/oder-detail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderDetailData),
-        });
+        return axios.post(`${API_URL}/oder-detail`, orderDetailData);
       });
 
-      const responses = await Promise.all(orderDetailPromises);
+      await Promise.all(orderDetailPromises);
 
-      if (responses.some(res => !res.ok)) {
-        throw new Error('Lưu chi tiết đơn hàng thất bại.');
-      }
-
-      // BƯỚC 3: XỬ LÝ KHI THÀNH CÔNG
       message.success('Tạo đơn hàng thành công! Đang chuyển đến trang thanh toán...');
       clearCart();
       router.push(`/payments/${order_id}`);
 
     } catch (error: any) {
       console.error("Lỗi khi thanh toán:", error);
-      message.error(error.message);
+      message.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn hàng.');
     } finally {
       setIsCheckingOut(false);
     }

@@ -1,64 +1,107 @@
-"use client"; // Chuyển thành Client Component để dùng hook
+'use client';
 
 import React from 'react';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Dropdown, Avatar, Space, Button, Spin } from 'antd';
+import type { MenuProps } from 'antd';
+import { UserOutlined, AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useAuth } from '../app/context/AuthContext'; 
 
 const { Header } = Layout;
 
-// 1. Cập nhật dữ liệu menu để chứa cả đường dẫn (path)
-const navLinks = [
-  {
-    key: '1',
-    label: 'Trang chủ',
-    path: '/',
-  },
-  {
-    key: '2',
-    label: 'Sản phẩm',
-    path: '/products',
-  },
-  {
-    key: '3',
-    label: 'Danh mục sản phẩm',
-    path: '/foodtype',
-  },
-  {
-    key: '4',
-    label: 'Lịch sử đặt hàng',
-    path: '/orders/order-history',
-  },
-  {
-    key: '5',
-    label: 'Lịch sử thanh toán',
-    path: '/payments/payment-history',
-  }
+// Menu cho người dùng thông thường
+const userNavLinks = [
+  { key: '/', label: <Link href="/">Trang chủ</Link> },
+  { key: '/products', label: <Link href="/products">Danh sách món ăn</Link> },
+  { key: '/foodtype', label: <Link href="/foodtype">Thực đơn</Link> },
+  { key: '/orders/order-history', label: <Link href="/orders/order-history">Lịch sử đơn hàng</Link> },
+  {key: 'payments/payment-history', label: <Link href="/payments/payment-history">Lịch sử thanh toán</Link>},
+
 ];
 
-// 2. Chuyển đổi dữ liệu để bọc label trong component <Link>
-const navItems = navLinks.map(link => ({
-  key: link.key,
-  label: <Link href={link.path}>{link.label}</Link>,
-}));
+// Menu cho quản trị viên
+const adminMenuItems = [
+  { key: '/admin/products', icon: <AppstoreOutlined />, label: <Link href="/admin/products">Sản phẩm</Link> },
+  { key: '/admin/foodtype', icon: <UnorderedListOutlined />, label: <Link href="/admin/foodtype">Loại món ăn</Link> },
+  { key: '/admin/users', icon: <UserOutlined />, label: <Link href="/admin/users">Người dùng</Link> },
+];
 
+const Navigation = () => {
+  const { user, loading, logout } = useAuth();
+  const profileMenuItems: MenuProps['items'] = user ? [
+    {
+      key: 'profile',
+      // **ĐIỀU HƯỚNG CHÍNH XÁC:** Dựa vào vai trò để dẫn đến trang profile tương ứng
+      label: <Link href={user.role?.toLowerCase() === 'admin' ? '/admin/profile' : '/profile'}>
+        Thông tin cá nhân
+      </Link>,
+    },
+    {
+      key: 'logout',
+      label: 'Đăng xuất',
+      onClick: logout, // Hàm logout từ useAuth hook
+      danger: true,
+    },
+  ] : [];
 
-const Navigation: React.FC = () => {
-  // 3. Lấy đường dẫn hiện tại để xác định menu item nào đang active
-  const pathname = usePathname();
-  const activeKey = navLinks.find(link => link.path === pathname)?.key;
+  // **CẢI TIẾN 2: Logic chọn menu rõ ràng hơn**
+  const getMenuItems = () => {
+    // Luôn kiểm tra loading trước
+    if (loading) return [];
+    
+    // Nếu có user, kiểm tra vai trò
+    if (user) {
+      // Dùng toLowerCase() để không phân biệt chữ hoa/thường
+      if (user.role?.toLowerCase() === 'admin') {
+        return adminMenuItems;
+      }
+      return userNavLinks;
+    }
+    
+    // Mặc định không hiển thị menu nào nếu chưa đăng nhập
+    return [];
+  };
 
   return (
-    <Header style={{ display: 'flex', alignItems: 'center' }}>
-      <div className="demo-logo" /> {/* Bạn có thể thay logo vào đây */}
+    <Header style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      padding: '0 24px', 
+      backgroundColor: 'white',
+      borderBottom: '1px solid #f0f0f0' 
+    }}>
+      <div className="logo" style={{ color: 'black', marginRight: '24px', fontWeight: 'bold', fontSize: '20px' }}>
+        <Link href="/">FoodApp</Link>
+      </div>
       <Menu
-        theme="dark"
+        theme="light"
         mode="horizontal"
-        // 4. Sử dụng `selectedKeys` để tự động highlight menu
-        selectedKeys={activeKey ? [activeKey] : []}
-        items={navItems}
-        style={{ flex: 1, minWidth: 0 }}
+        items={getMenuItems()}
+        style={{ flex: 1, borderBottom: 'none' }}
+        disabled={loading} // Vô hiệu hóa menu khi đang tải
       />
+      
+      <div className="user-profile">
+        {loading ? (
+          <Spin /> // Hiển thị loading khi đang xác thực
+        ) : user ? (
+          // Chỉ hiển thị Dropdown khi có user
+          <Dropdown menu={{ items: profileMenuItems }} trigger={['click']}>
+            <a onClick={(e) => e.preventDefault()} style={{cursor: 'pointer'}}>
+              <Space>
+                <Avatar icon={<UserOutlined />} />
+                {user.name}
+              </Space>
+            </a>
+          </Dropdown>
+        ) : (
+          // Hiển thị nút Đăng nhập/Đăng ký khi không có user
+          <Space>
+            <Button><Link href="/auth/login">Đăng nhập</Link></Button>
+            <Button type="primary"><Link href="/auth/register">Đăng ký</Link></Button>
+          </Space>
+        )}
+      </div>
     </Header>
   );
 };

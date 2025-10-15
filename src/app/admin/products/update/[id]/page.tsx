@@ -29,16 +29,36 @@ const UpdateProductPage = () => {
     }, [id]);
 
     const handleUpdate = async (values: any) => {
+        console.log('Attempting to update with values:', values);
         setIsSubmitting(true);
         try {
+            const payload = {
+                ...values,
+                // Đảm bảo price và quantity luôn là kiểu number
+                price: Number(values.price),
+                quantity: Number(values.quantity),
+            };
+
+            // In ra để kiểm tra
+            console.log('Attempting to update with payload:', payload);
+
+            // --- BƯỚC 2: GỬI `payload` ĐÃ ĐƯỢC CHUYỂN ĐỔI ĐI ---
             const response = await fetch(`http://localhost:8080/api/v1/foods/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(values),
+                body: JSON.stringify(payload), // Gửi payload thay vì values
             });
-            if (!response.ok) throw new Error("Cập nhật sản phẩm thất bại.");
+
+            if (!response.ok) {
+                // Để xem lỗi chi tiết hơn từ backend
+                const errorData = await response.json();
+                console.error('Backend validation error:', errorData);
+                throw new Error(errorData.message || "Cập nhật sản phẩm thất bại.");
+            }
+
             message.success("Cập nhật sản phẩm thành công!");
             router.push('/admin/products');
+
         } catch (error: any) {
             message.error(error.message);
         } finally {

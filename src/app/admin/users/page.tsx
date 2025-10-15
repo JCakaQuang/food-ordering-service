@@ -1,83 +1,111 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, message, Popconfirm, Tag, TablePaginationConfig, TableProps } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import Link from 'next/link';
+import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Space } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import axios from 'axios';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
 interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
+    _id: string;
+    name: string;
+    email: string;
+    phone: string;
+    role: 'admin' | 'user';
 }
 
-const UserListPage = () => {
+interface ApiResponse {
+    data: User[];
+    meta: {
+        current: number;
+        pageSize: number;
+        total: number;
+        totalPages: number;
+    };
+}
+
+const UserManagementPage = () => {
     const [users, setUsers] = useState<User[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [form] = Form.useForm();
 
-    const [pagination, setPagination] = useState<TablePaginationConfig>({
-        current: 1,
-        pageSize: 10,
-        total: 0,
-    });
-    const fetchData = async (paginationParams: TablePaginationConfig = {}) => {
-        setIsLoading(true);
-        const { current = 1, pageSize = 10 } = pagination;
+    const fetchUsers = async () => {
+        setLoading(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/v1/users?current=${current}&pageSize=${pageSize}`);
-            const result = await response.json();
-            setUsers(result.data);
-
-            setPagination(prev => ({
-                ...prev,
-                current: result.meta.current,
-                pageSize: result.meta.pageSize,
-                total: result.meta.total,
-            }));
+            const response = await axios.get<ApiResponse>(`${API_URL}/users`);
+            setUsers(response.data.data);
         } catch (error) {
-            message.error("Không thể tải danh sách người dùng.");
+            message.error('Lỗi khi tải danh sách người dùng');
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        fetchUsers();
     }, []);
 
-    const handleDelete = async (id: string) => {
+    const showModal = (user: any = null) => {
+        setEditingUser(user);
+        form.setFieldsValue(user || { name: '', email: '', phone: '', role: 'user' });
+        setIsModalVisible(true);
+    };
+
+    const handleCancel = () => {
+        setIsModalVisible(false);
+        setEditingUser(null);
+        form.resetFields();
+    };
+
+    const onFinish = async (values: any) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/v1/users/${id}`, { method: 'DELETE' });
-            if (!response.ok) throw new Error("Xóa thất bại.");
-            message.success("Xóa người dùng thành công!");
-            fetchData();
+            if (editingUser) {
+                // Update user
+                await axios.patch(`${API_URL}/users/${editingUser._id}`, values);
+                message.success('Cập nhật người dùng thành công!');
+            } else {
+                // Create user
+                await axios.post(`${API_URL}/users`, values);
+                message.success('Thêm người dùng thành công!');
+            }
+            handleCancel();
+            fetchUsers();
         } catch (error: any) {
-            message.error(error.message);
+            message.error(error.response?.data?.message || 'Thao tác thất bại');
         }
     };
 
-    const handleTableChange: TableProps<User>['onChange'] = (newPagination) => {
-        fetchData({
-            current: newPagination.current,
-            pageSize: newPagination.pageSize,
-        });
+    const handleDelete = async (userId: string) => {
+        try {
+            await axios.delete(`${API_URL}/users/${userId}`);
+            message.success('Xóa người dùng thành công!');
+            fetchUsers();
+        } catch (error) {
+            message.error('Xóa người dùng thất bại');
+        }
     };
 
     const columns = [
         { title: 'Tên', dataIndex: 'name', key: 'name' },
         { title: 'Email', dataIndex: 'email', key: 'email' },
-        { title: 'Vai trò', dataIndex: 'role', key: 'role', render: (role: string) => <Tag color={role === 'admin' ? 'red' : 'blue'}>{role.toUpperCase()}</Tag> },
+        { title: 'Điện thoại', dataIndex: 'phone', key: 'phone' },
+        { title: 'Vai trò', dataIndex: 'role', key: 'role' },
         {
             title: 'Hành động',
             key: 'action',
-            render: (_: any, record: User) => (
-                <Space size="middle">
-                    <Link href={`/admin/users/update/${record._id}`}>
-                        <Button icon={<EditOutlined />} type="primary">Sửa</Button>
-                    </Link>
-                    <Popconfirm title="Bạn có chắc muốn xóa người dùng này?" onConfirm={() => handleDelete(record._id)}>
-                        <Button icon={<DeleteOutlined />} danger>Xóa</Button>
+            render: (_: any, record: any) => (
+                <Space>
+                    <Button icon={<EditOutlined />} onClick={() => showModal(record)} />
+                    <Popconfirm
+                        title="Bạn có chắc muốn xóa?"
+                        onConfirm={() => handleDelete(record._id)}
+                        okText="Xóa"
+                        cancelText="Hủy"
+                    >
+                        <Button icon={<DeleteOutlined />} danger />
                     </Popconfirm>
                 </Space>
             ),
@@ -85,22 +113,50 @@ const UserListPage = () => {
     ];
 
     return (
-        <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h1>Quản lý Người dùng</h1>
-                <Link href="/admin/users/create">
-                    <Button type="primary" icon={<PlusOutlined />}>Thêm người dùng</Button>
-                </Link>
-            </div>
-            <Table columns={columns} 
-            dataSource={users} 
-            rowKey="_id" 
-            loading={isLoading} 
-            pagination={pagination}
-            onChange={handleTableChange}
-            />
+        <div style={{ padding: '24px' }}>
+            <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => showModal()}
+                style={{ marginBottom: 16 }}
+            >
+                Thêm người dùng
+            </Button>
+            <Table columns={columns} dataSource={users} rowKey="_id" loading={loading} />
+
+            <Modal
+                title={editingUser ? 'Sửa thông tin người dùng' : 'Thêm người dùng mới'}
+                visible={isModalVisible}
+                onCancel={handleCancel}
+                onOk={() => form.submit()}
+                okText={editingUser ? 'Lưu' : 'Tạo'}
+                cancelText="Hủy"
+            >
+                <Form form={form} layout="vertical" onFinish={onFinish}>
+                    <Form.Item name="name" label="Tên" rules={[{ required: true }]}>
+                        <Input />
+                    </Form.Item>
+                    <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
+                        <Input />
+                    </Form.Item>
+                    {!editingUser && ( // Chỉ hiển thị trường password khi tạo mới
+                        <Form.Item name="password" label="Mật khẩu" rules={[{ required: true, min: 6 }]}>
+                            <Input.Password />
+                        </Form.Item>
+                    )}
+                    <Form.Item name="phone" label="Điện thoại" rules={[{ required: true }]}>
+                        <Input />
+                    </Form.Item>
+                    <Form.Item name="role" label="Vai trò" rules={[{ required: true }]}>
+                        <Select>
+                            <Select.Option value="admin">Admin</Select.Option>
+                            <Select.Option value="user">User</Select.Option>
+                        </Select>
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 };
 
-export default UserListPage;
+export default UserManagementPage;

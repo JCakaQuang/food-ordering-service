@@ -1,26 +1,60 @@
-"use client";
+'use client';
 
-import React from 'react';
-import UserForm from '../../_components/form';
-import { message } from 'antd';
+import React, { useEffect, useState } from 'react';
+import UserForm from '../../_components/form'; // Giả định form component nằm ở đây
+import { message, Spin, Typography } from 'antd';
 import { useRouter, useParams } from 'next/navigation';
-import useSWR from 'swr'; // Dùng SWR để fetch data hiệu quả hơn
+import useSWR from 'swr';
 
-// Hàm fetcher cho SWR
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const { Title } = Typography;
+
+// Hàm fetcher cho SWR, có khả năng gửi token xác thực
+const fetcher = async ([url, token]: [string, string | null]) => {
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    const error = new Error('An error occurred while fetching the data.');
+    // Gắn thêm thông tin vào đối tượng lỗi
+    throw error;
+  }
+  return res.json();
+};
 
 const UpdateUserPage = () => {
     const router = useRouter();
     const params = useParams();
     const id = params.id as string;
     
-    // Fetch dữ liệu bằng SWR
-    const { data: initialData, error, isLoading } = useSWR(id ? `http://localhost:8080/api/v1/users/${id}` : null, fetcher);
+    const [token, setToken] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Kiểm tra quyền admin và lấy token khi component được mount
+    useEffect(() => {
+        const storedToken = localStorage.getItem('access_token');
+        const storedUser = JSON.parse(localStorage.getItem('user_info') || '{}');
 
-    const [isSubmitting, setIsSubmitting] = React.useState(false);
+        if (!storedToken || storedUser.role !== 'admin') {
+            message.error('Bạn không có quyền truy cập trang này.');
+            router.push('/auth/login');
+        } else {
+            setToken(storedToken);
+        }
+    }, [router]);
+
+    // Fetch dữ liệu bằng SWR, chỉ fetch khi có ID và token
+    const { data: initialData, error, isLoading } = useSWR(
+        id && token ? [`http://localhost:8080/api/v1/users/${id}`, token] : null,
+        fetcher
+    );
 
     const handleUpdate = async (values: any) => {
-        // Nếu password rỗng, không gửi nó trong payload
+        // Nếu password rỗng, không gửi nó trong payload để tránh ghi đè mật khẩu cũ
         if (!values.password) {
             delete values.password;
         }
@@ -29,10 +63,18 @@ const UpdateUserPage = () => {
         try {
             const response = await fetch(`http://localhost:8080/api/v1/users/${id}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`, // Gửi token xác thực
+                },
                 body: JSON.stringify(values),
             });
-            if (!response.ok) throw new Error("Cập nhật thất bại.");
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Cập nhật thất bại.");
+            }
+            
             message.success("Cập nhật người dùng thành công!");
             router.push('/admin/users');
         } catch (error: any) {
@@ -42,17 +84,24 @@ const UpdateUserPage = () => {
         }
     };
 
-    if (isLoading) return <p>Đang tải dữ liệu...</p>;
-    if (error) return <p>Không thể tải dữ liệu người dùng.</p>;
+    if (isLoading || !token) {
+        return <Spin size="large" style={{ display: 'block', marginTop: 50 }} />;
+    }
+    
+    if (error) {
+        return <p>Không thể tải dữ liệu người dùng. Vui lòng thử lại.</p>;
+    }
 
     return (
         <div>
-            <h1>Cập nhật người dùng</h1>
-            <UserForm 
-                initialData={initialData}
-                onSubmit={handleUpdate}
-                isSubmitting={isSubmitting}
-            />
+            <Title level={2}>Cập nhật người dùng</Title>
+            {initialData && (
+                 <UserForm 
+                    initialData={initialData}
+                    onSubmit={handleUpdate}
+                    isSubmitting={isSubmitting}
+                 />
+            )}
         </div>
     );
 };

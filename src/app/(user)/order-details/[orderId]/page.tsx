@@ -48,7 +48,6 @@ const OrderDetailsPage = () => {
 
     return (
         <div>
-            <Navigation></Navigation>
             <h1>Chi tiết đơn hàng: {orderId}</h1>
             <ul>
                 {details.map((item, index) => (

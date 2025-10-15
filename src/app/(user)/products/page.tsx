@@ -56,9 +56,9 @@ const FoodPage: React.FC = () => {
         return <Alert message="Lỗi" description={error} type="error" showIcon />;
     }
 
+
     return (
         <div style={{ padding: '2rem' }}>
-            <Navigation></Navigation>
 
             <ContentWrapper>
                 <Title level={2} style={{ textAlign: 'center', marginBottom: 40 }}>
@@ -84,8 +84,6 @@ const FoodPage: React.FC = () => {
 
                 <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
             </ContentWrapper>
-
-            <Footerapp />
         </div>
     );
 };

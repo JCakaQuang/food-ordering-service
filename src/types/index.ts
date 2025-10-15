@@ -29,3 +29,12 @@ export interface FoodType {
   name: string;
   description: string;
 }
+
+export interface User {
+  _id: string;
+  name: string;
+  phone: string;
+  address: string;
+  email: string;
+  role: 'user' | 'admin';
+}

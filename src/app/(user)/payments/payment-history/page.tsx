@@ -1,74 +1,112 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from 'react';
-import { List, Typography, Tag } from 'antd';
-import Navigation from '@/components/Navigation';
+import React, { useEffect, useState } from 'react';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/app/context/AuthContext';
+import axios from 'axios';
+import { Card, Typography, Spin, Table, Tag, message } from 'antd';
 
 const { Title, Text } = Typography;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
 interface Payment {
-    _id: string;
-    amount: number;
-    status: string;
-    createdAt: string;
-    order_id: string;
+  _id: string;
+  order_id: string;
+  method: string;
+  amount: number;
+  status: string;
+  createdAt: string;
 }
 
+const PaymentHistoryContent = () => {
+  const { user } = useAuth();
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  console.log('User ID đang đăng nhập:', user);
+
+  useEffect(() => {
+    if (user?._id) {
+      const fetchPayments = async () => {
+        try {
+          const response = await axios.get<Payment[]>(`${API_URL}/payment/user/${user._id}`);
+          setPayments(response.data);
+        } catch (error) {
+          message.error('Lỗi khi tải lịch sử thanh toán');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchPayments();
+    }
+  }, [user]);
+
+  const columns = [
+    {
+      title: 'Mã Đơn hàng',
+      dataIndex: 'order_id',
+      key: 'order_id',
+    },
+    {
+      title: 'Số tiền',
+      dataIndex: 'amount',
+      key: 'amount',
+      render: (amount: number) => `${amount.toLocaleString('vi-VN')} VNĐ`,
+    },
+    {
+      title: 'Phương thức',
+      dataIndex: 'method',
+      key: 'method',
+      render: (method: string) => {
+        let text = 'Tiền mặt';
+        if (method === 'momo') text = 'Momo';
+        if (method === 'credit_card') text = 'Thẻ tín dụng';
+        return <Text>{text}</Text>;
+      },
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'success' ? 'green' : 'red'}>
+          {status.toUpperCase()}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Ngày giao dịch',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date: string) => new Date(date).toLocaleString('vi-VN'),
+    },
+  ];
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', marginTop: 50 }}><Spin size="large" /></div>;
+  }
+
+  return (
+    <div style={{ padding: '24px' }}>
+      <Card>
+        <Title level={2}>Lịch sử Thanh toán</Title>
+        <Table
+          dataSource={payments}
+          columns={columns}
+          rowKey="_id"
+          pagination={{ pageSize: 10 }}
+        />
+      </Card>
+    </div>
+  );
+};
+
 const PaymentHistoryPage = () => {
-    const [payments, setPayments] = useState<Payment[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    // Tạm thời hardcode userId
-    const userId = "68e7099ad296e2b9139f75dd";
-
-    useEffect(() => {
-        const fetchPaymentHistory = async () => {
-            setIsLoading(true);
-            try {
-                const response = await fetch(`http://localhost:8080/api/v1/payment/user/${userId}`);
-                if (!response.ok) {
-                    throw new Error("Không thể tải lịch sử thanh toán.");
-                }
-                const data = await response.json();
-                setPayments(data);
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchPaymentHistory();
-    }, [userId]);
-
-    if (isLoading) return <p>Đang tải lịch sử...</p>;
-    if (error) return <p>Lỗi: {error}</p>;
-
-    return (
-        <div style={{ padding: '2rem' }}>
-            <Navigation></Navigation>
-            <Title level={2}>Lịch sử Thanh toán</Title>
-            <List
-                itemLayout="horizontal"
-                dataSource={payments}
-                renderItem={(payment) => (
-                    <List.Item>
-                        <List.Item.Meta
-                            title={`Giao dịch cho đơn hàng #${payment.order_id}`}
-                            description={
-                                <>
-                                    <Text>Ngày thanh toán: {new Date(payment.createdAt).toLocaleString('vi-VN')}</Text><br/>
-                                    <Text>Số tiền: {new Intl.NumberFormat('vi-VN').format(payment.amount)} đ</Text>
-                                </>
-                            }
-                        />
-                        <Tag color={payment.status === 'success' ? 'success' : 'error'}>{payment.status}</Tag>
-                    </List.Item>
-                )}
-            />
-        </div>
-    );
+  return (
+    <ProtectedRoute>
+      <PaymentHistoryContent />
+    </ProtectedRoute>
+  );
 };
 
 export default PaymentHistoryPage;

@@ -17,6 +17,7 @@
     "@ant-design/nextjs-registry": "1.1.0",
     "@types/react-router-dom": "5.3.3",
     "antd": "5.27.4",
+    "axios": "^1.12.2",
     "next": "15.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3",
+    "@types/axios": "^0.9.36",
     "@types/node": "24.5.2",
     "@types/react": "19.1.14",
     "@types/react-dom": "19.1.9",

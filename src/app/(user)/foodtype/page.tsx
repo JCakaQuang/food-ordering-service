@@ -72,8 +72,8 @@ const MenuPage = () => {
     };
 
     return (
+        <Layout>
         <div style={{ padding: '2rem' }} >
-            <Navigation></Navigation>
 
             <Layout style={{ minHeight: '100vh', background: '#fff' }}>
                 <Sider width={250} style={{ background: '#fff', borderRight: '1px solid #f0f0f0' }}>
@@ -115,8 +115,8 @@ const MenuPage = () => {
                 <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
             </Layout>
 
-            <Footerapp />
         </div>
+        </Layout>
     );
 };
 
