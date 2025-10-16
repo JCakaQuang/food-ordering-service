@@ -22,7 +22,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSubmit, isSubm
         // Lấy danh sách loại món ăn để hiển thị trong dropdown
         const fetchFoodtypes = async () => {
             try {
-                const response = await fetch('http://localhost:8080/api/v1/foodtype');
+                const response = await fetch('http://localhost:8082/api/v1/foodtype');
                 const result = await response.json();
                 setFoodtypes(result.data);
             } catch (error) {

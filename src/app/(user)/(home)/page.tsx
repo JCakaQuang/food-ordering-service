@@ -1,13 +1,18 @@
-import Navigation from "@/components/Navigation";
+import Image from "next/image";
 import ContentWrapper from "@/components/ContentWrapper";
-import Footerapp from "@/components/Footer";
 
 export default function Home() {
-
   return (
-      <div style={{ padding: '2rem' }}>
+    <div style={{ padding: '2rem' }}>
       <ContentWrapper>
-        <h1>Home Page</h1>
+        <Image
+          src="/images/home-banner.jpg"
+          alt="Home Banner"
+          width={1400}
+          height={800}
+          style={{flex: '1', width: '100%', height: 'auto', borderRadius: 8}}
+          priority
+        />
       </ContentWrapper>
     </div>
   );

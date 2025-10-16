@@ -1,16 +1,28 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, message, Popconfirm, Image, App, TableProps, TablePaginationConfig } from 'antd';
+import axios from 'axios';
+import { Table, Button, Space, Popconfirm, Image, App, TableProps, TablePaginationConfig } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 
+// 1. Giữ nguyên interface Product
 interface Product {
-  _id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
+    _id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image?: string;
+}
+
+// 2. Định nghĩa interface cho toàn bộ cấu trúc API response
+interface ApiResponse {
+    data: Product[];
+    meta: {
+        current: number;
+        pageSize: number;
+        total: number;
+    };
 }
 
 const ProductListPage = () => {
@@ -24,14 +36,21 @@ const ProductListPage = () => {
         total: 0,
     });
 
-    const fetchData = async (paginationParams: TablePaginationConfig = {}) => {
+    const fetchData = async (paginationParams: TablePaginationConfig = pagination) => {
         setIsLoading(true);
         const { current = 1, pageSize = 10 } = paginationParams;
         try {
-            const response = await fetch(`http://localhost:8080/api/v1/foods?current=${current}&pageSize=${pageSize}`);
-            const result = await response.json();
-            setProducts(result.data);
+            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/foods`;
+            
+            // 3. Áp dụng kiểu ApiResponse cho axios.get
+            const response = await axios.get<ApiResponse>(apiUrl, {
+                params: { current, pageSize }
+            });
 
+            // Bây giờ TypeScript đã biết 'result' có cấu trúc ApiResponse
+            const result = response.data; 
+
+            setProducts(result.data);
             setPagination(prev => ({
                 ...prev,
                 current: result.meta.current,
@@ -39,7 +58,8 @@ const ProductListPage = () => {
                 total: result.meta.total,
             }));
         } catch (error: any) {
-            message.error(error.message || "Không thể tải danh sách sản phẩm.");
+            console.error("Lỗi khi tải danh sách sản phẩm:", error);
+            message.error("Không thể tải danh sách sản phẩm.");
         } finally {
             setIsLoading(false);
         }
@@ -47,32 +67,31 @@ const ProductListPage = () => {
 
     useEffect(() => {
         fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleDelete = async (id: string) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/v1/foods/${id}`, {
-                method: 'DELETE',
-            });
-            if (!response.ok) throw new Error("Xóa thất bại.");
+            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/foods/${id}`;
+            await axios.delete(apiUrl);
+
             message.success("Xóa sản phẩm thành công!");
-            fetchData();
+            fetchData(pagination);
         } catch (error: any) {
-            message.error(error.message);
+            console.error("Lỗi khi xóa sản phẩm:", error);
+            const errorMessage = error.response?.data?.message || "Xóa thất bại.";
+            message.error(errorMessage);
         }
     };
 
     const handleTableChange: TableProps<Product>['onChange'] = (newPagination) => {
-        fetchData({
-            current: newPagination.current,
-            pageSize: newPagination.pageSize,
-        });
+        fetchData(newPagination);
     };
 
     const columns = [
-        { 
-            title: 'Ảnh', 
-            dataIndex: 'image', 
+        {
+            title: 'Ảnh',
+            dataIndex: 'image',
             key: 'image',
             render: (url: string) => <Image src={url} width={60} height={60} alt="food" style={{ objectFit: 'cover' }} />
         },
@@ -108,9 +127,9 @@ const ProductListPage = () => {
                     <Button type="primary" icon={<PlusOutlined />}>Thêm sản phẩm</Button>
                 </Link>
             </div>
-            <Table columns={columns} dataSource={products} rowKey="_id" loading={isLoading} 
+            <Table columns={columns} dataSource={products} rowKey="_id" loading={isLoading}
                 pagination={pagination}
-                onChange={handleTableChange}/>
+                onChange={handleTableChange} />
         </div>
     );
 };

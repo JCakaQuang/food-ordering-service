@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { Drawer, List, Button, Typography, Avatar, message } from 'antd';
 import { useCart } from '@/app/(user)/orders/_components/CartContext';
-import { useAuth } from '@/app/context/AuthContext'; // <--- BƯỚC 1: IMPORT USEAUTH
+import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import axios from 'axios'; // Dùng axios cho nhất quán
+import axios from 'axios';
 
 const { Title } = Typography;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081/api/v1';
 
 
 const formatCurrency = (value: number) => {
@@ -17,12 +17,11 @@ const formatCurrency = (value: number) => {
 
 const CartDrawer: React.FC<{ open: boolean; onClose: () => void; }> = ({ open, onClose }) => {
   const { cartItems, clearCart, totalPrice, removeFromCart } = useCart();
-  const { user } = useAuth(); // <--- BƯỚC 2: LẤY THÔNG TIN USER TỪ CONTEXT
+  const { user } = useAuth();
   const router = useRouter();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const handleCheckout = async () => {
-    // Thêm kiểm tra: Nếu chưa đăng nhập, yêu cầu đăng nhập
     if (!user) {
       message.warning('Vui lòng đăng nhập để tiếp tục thanh toán!');
       router.push('/auth/login');
@@ -38,7 +37,7 @@ const CartDrawer: React.FC<{ open: boolean; onClose: () => void; }> = ({ open, o
 
     try {
       const orderData = {
-        user_id: user._id, // <--- BƯỚC 3: SỬ DỤNG ID CỦA USER ĐANG ĐĂNG NHẬP
+        user_id: user._id,
         status: "pending",
         total_price: totalPrice,
       };
@@ -89,7 +88,7 @@ const CartDrawer: React.FC<{ open: boolean; onClose: () => void; }> = ({ open, o
             onClick={handleCheckout}
             type="primary"
             size="large"
-            loading={isCheckingOut} // Thêm trạng thái loading cho nút
+            loading={isCheckingOut}
           >
             Thanh Toán
           </Button>

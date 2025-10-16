@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { Form, Input, Button } from 'antd';
 
 interface FoodtypeFormProps {
-    initialData?: any; // Dữ liệu ban đầu để điền vào form khi "Sửa"
+    initialData?: any;
     onSubmit: (values: any) => void;
     isSubmitting: boolean;
 }
@@ -12,7 +12,6 @@ interface FoodtypeFormProps {
 const FoodtypeForm: React.FC<FoodtypeFormProps> = ({ initialData, onSubmit, isSubmitting }) => {
     const [form] = Form.useForm();
 
-    // Điền dữ liệu vào form nếu đây là trang "Sửa"
     useEffect(() => {
         if (initialData) {
             form.setFieldsValue(initialData);

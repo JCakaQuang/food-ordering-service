@@ -18,7 +18,7 @@ const UpdateFoodtypePage = () => {
         // Lấy dữ liệu cũ của đối tượng để điền vào form
         const fetchInitialData = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/api/v1/foodtype/${id}`);
+                const response = await fetch(`http://localhost:8000/api/v1/foodtype/${id}`);
                 const result = await response.json();
                 setInitialData(result);
             } catch (error) {
@@ -32,7 +32,7 @@ const UpdateFoodtypePage = () => {
         console.log('Attempting to update with values:', values);
         setIsSubmitting(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/v1/foodtype/${id}`, {
+            const response = await fetch(`http://localhost:8000/api/v1/foodtype/${id}`, {
                 method: 'PATCH', // Hoặc PUT
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(values),

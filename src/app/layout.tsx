@@ -7,6 +7,7 @@ import Navigation from "@/components/Navigation";
 import FooterComponent from "@/components/Footer";
 import AppProvider from "@/components/AppProvider";
 import { AuthProvider } from "./context/AuthContext";
+import AntdAppProvider from "@/components/AppProvider";
 const { Content } = Layout;
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,7 +26,7 @@ export default function RootLayout({
       <body className={inter.className}>
             <AuthProvider>
         <AntdRegistry>
-      
+      <AntdAppProvider>
             <AppProvider>
             <Layout style={{ minHeight: '100vh' }}>
             <Navigation /> 
@@ -36,7 +37,7 @@ export default function RootLayout({
             <FooterComponent />
           </Layout>
           </AppProvider>
-
+</AntdAppProvider>
         </AntdRegistry>
         </AuthProvider>
       </body>

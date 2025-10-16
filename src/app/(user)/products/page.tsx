@@ -1,18 +1,25 @@
-"use client"; // Cần thiết để sử dụng useState và useEffect
+"use client";
 
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Spin, Alert, FloatButton, Typography } from 'antd';
+import axios from 'axios';
+import { Row, Col, Spin, Alert, FloatButton, Typography, Pagination } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 import FoodCard from '@/app/(user)/products/_components/FoodCard';
 import { FoodItem } from '@/types';
-import Navigation from '@/components/Navigation';
 import ContentWrapper from '@/components/ContentWrapper';
-import Footerapp from '@/components/Footer';
-import { useCart } from '@/app/(user)/orders/_components/CartContext'; // Import useCart
-import CartDrawer from '@/app/(user)/orders/_components/CartDrawer'; // Import CartDrawer
+import { useCart } from '@/app/(user)/orders/_components/CartContext';
+import CartDrawer from '@/app/(user)/orders/_components/CartDrawer';
 
 const { Title } = Typography;
 
+interface ApiResponse {
+    data: FoodItem[];
+    meta: {
+        current: number;
+        pageSize: number;
+        total: number;
+    };
+}
 
 const FoodPage: React.FC = () => {
     const [foods, setFoods] = useState<FoodItem[]>([]);
@@ -21,32 +28,47 @@ const FoodPage: React.FC = () => {
     const { totalItems } = useCart();
     const [cartOpen, setCartOpen] = useState(false);
 
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 8,
+        total: 0,
+    });
+
+    const fetchFoods = async (page: number, pageSize: number) => {
+        setLoading(true);
+        try {
+            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/foods`;
+            const response = await axios.get<ApiResponse>(apiUrl, {
+                params: {
+                    current: page,
+                    pageSize: pageSize,
+                }
+            });
+
+            const { data, meta } = response.data;
+
+            setFoods(data);
+            setPagination({
+                current: meta.current,
+                pageSize: meta.pageSize,
+                total: meta.total,
+            });
+
+        } catch (err: any) {
+            console.error("Lỗi khi fetch dữ liệu:", err);
+            setError('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchFoods = async () => {
-            try {
-                const response = await fetch('http://localhost:8080/api/v1/foods');
-                if (!response.ok) {
-                    throw new Error('Không thể kết nối đến máy chủ');
-                }
-                const responseData = await response.json(); // Đổi tên biến để rõ ràng hơn
-
-                // QUAN TRỌNG: Truy cập vào thuộc tính 'data' của đối tượng trả về
-                if (responseData && Array.isArray(responseData.data)) {
-                    setFoods(responseData.data); // Chỉ lấy mảng foods từ responseData.data
-                } else {
-                    setFoods([]); // Nếu không có data thì set mảng rỗng
-                    console.warn("API did not return an array in the 'data' property:", responseData);
-                }
-
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchFoods();
+        fetchFoods(pagination.current, pagination.pageSize);
     }, []);
+
+    const handlePageChange = (page: number, pageSize: number) => {
+        fetchFoods(page, pageSize);
+    };
 
     if (loading) {
         return <Spin size="large" style={{ display: 'block', marginTop: '20%' }} />;
@@ -56,10 +78,8 @@ const FoodPage: React.FC = () => {
         return <Alert message="Lỗi" description={error} type="error" showIcon />;
     }
 
-
     return (
         <div style={{ padding: '2rem' }}>
-
             <ContentWrapper>
                 <Title level={2} style={{ textAlign: 'center', marginBottom: 40 }}>
                     Danh Sách Món Ăn
@@ -73,13 +93,22 @@ const FoodPage: React.FC = () => {
                     ))}
                 </Row>
 
-                {/* Nút giỏ hàng nổi */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem' }}>
+                    <Pagination
+                        current={pagination.current}
+                        pageSize={pagination.pageSize}
+                        total={pagination.total}
+                        onChange={handlePageChange}
+                        showSizeChanger={false}
+                    />
+                </div>
+
                 <FloatButton
                     icon={<ShoppingCartOutlined />}
                     type="primary"
-                    badge={{ count: totalItems, color: 'red' }} // Hiển thị số lượng động
+                    badge={{ count: totalItems, color: 'red' }}
                     tooltip="Xem giỏ hàng"
-                    onClick={() => setCartOpen(true)} // Mở giỏ hàng khi click
+                    onClick={() => setCartOpen(true)}
                 />
 
                 <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />

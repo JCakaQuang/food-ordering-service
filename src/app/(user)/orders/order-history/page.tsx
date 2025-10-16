@@ -4,11 +4,10 @@ import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/app/context/AuthContext';
 import axios from 'axios';
-import { Card, Typography, Spin, Collapse, List, Avatar, Tag, message } from 'antd';
+import { Card, Typography, Spin, Collapse, List, Avatar, Tag, App } from 'antd';
 import type { CollapseProps } from 'antd';
 
 const { Title, Text } = Typography;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
 interface Food {
   _id: string;
@@ -23,6 +22,13 @@ interface OrderDetail {
   price: number;
 }
 
+interface OrderDetailFromApi {
+    _id: string;
+    food_id: string;
+    quantity: number;
+    price: number;
+}
+
 interface Order {
   _id: string;
   status: string;
@@ -31,29 +37,49 @@ interface Order {
 }
 
 interface DetailsApiResponse {
-    data: OrderDetail[];
+    data: OrderDetailFromApi[];
     meta: object;
 }
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const OrderDetails = ({ orderId }: { orderId: string }) => {
   const [details, setDetails] = useState<OrderDetail[]>([]);
   const [loading, setLoading] = useState(true);
+  const { message } = App.useApp();
 
   useEffect(() => {
     const fetchDetails = async () => {
-      try {
+        if (!API_URL) return;
+        setLoading(true);
+        try {
+            const response = await axios.get<DetailsApiResponse>(`${API_URL}/oder-detail?order_id=${orderId}`);
+            const detailsFromApi = response.data.data || [];
+            
+            if (detailsFromApi.length === 0) {
+                setDetails([]);
+                return;
+            }
 
-        const response = await axios.get<DetailsApiResponse>(`${API_URL}/oder-detail?order_id=${orderId}`);
+            const foodDetailPromises = detailsFromApi.map(detail =>
+                axios.get<Food>(`${API_URL}/foods/${detail.food_id}`)
+            );
+            const foodDetailResponses = await Promise.all(foodDetailPromises);
 
-        setDetails(response.data.data || []);
-      } catch (error) {
-        message.error('Lỗi khi tải chi tiết đơn hàng');
-      } finally {
-        setLoading(false);
-      }
+            const fullDetails: OrderDetail[] = detailsFromApi.map((detail, index) => ({
+                ...detail,
+                food_id: foodDetailResponses[index].data,
+            }));
+
+            setDetails(fullDetails);
+        } catch (error) {
+            message.error('Lỗi khi tải chi tiết đơn hàng');
+        } finally {
+            setLoading(false);
+        }
     };
     fetchDetails();
-  }, [orderId]);
+  }, [orderId, message]);
 
   if (loading) return <Spin />;
 
@@ -64,7 +90,7 @@ const OrderDetails = ({ orderId }: { orderId: string }) => {
       renderItem={(item) => (
         <List.Item>
           <List.Item.Meta
-            avatar={<Avatar src={item.food_id?.image || '/placeholder.png'} />}
+            avatar={<Avatar shape="square" size={64} src={item.food_id?.image || '/placeholder.png'} />}
             title={item.food_id?.name || 'Món ăn không xác định'}
             description={`Số lượng: ${item.quantity} - Giá: ${item.price.toLocaleString('vi-VN')} VNĐ`}
           />
@@ -79,9 +105,10 @@ const OrderHistoryContent = () => {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const { message } = App.useApp();
 
   useEffect(() => {
-    if (user?._id) {
+    if (user?._id && API_URL) {
       const fetchOrders = async () => {
         try {
           const response = await axios.get<Order[]>(`${API_URL}/order/history/by-user/${user._id}`);
@@ -94,19 +121,20 @@ const OrderHistoryContent = () => {
         }
       };
       fetchOrders();
-    } else if (!user) {
+    } else {
         setLoading(false);
     }
-  }, [user]);
+  }, [user, message]);
   
-  // SỬA LỖI Ở ĐÂY: Chuyển đổi mảng `orders` thành cấu trúc `items` mà Collapse yêu cầu
   const collapseItems: CollapseProps['items'] = orders.map((order) => ({
     key: order._id,
     label: (
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-        <Text strong>Mã đơn: {order._id}</Text>
-        <Text>Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')}</Text>
-        <Tag color={order.status === 'paid' ? 'green' : 'gold'}>{order.status}</Tag>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+        <Text style={{flex: 1}} strong>Mã đơn: <Text copyable>{order._id}</Text></Text>
+        <Text style={{flex: 1, textAlign: 'center'}}>Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')}</Text>
+        <div style={{flex: 1, textAlign: 'right'}}>
+          <Tag color={order.status === 'paid' ? 'green' : 'gold'}>{order.status}</Tag>
+        </div>
       </div>
     ),
     children: (
@@ -131,7 +159,6 @@ const OrderHistoryContent = () => {
       <Card>
         <Title level={2}>Lịch sử Đơn hàng</Title>
         {orders.length > 0 ? (
-          // Thay thế cách dùng cũ bằng thuộc tính `items`
           <Collapse accordion items={collapseItems} />
         ) : (
           <Text>Bạn chưa có đơn hàng nào.</Text>
@@ -141,12 +168,10 @@ const OrderHistoryContent = () => {
   );
 };
 
-const OrderHistoryPage = () => {
-  return (
-    <ProtectedRoute>
-      <OrderHistoryContent />
-    </ProtectedRoute>
-  );
-};
+const OrderHistoryPage = () => (
+  <ProtectedRoute>
+    <OrderHistoryContent />
+  </ProtectedRoute>
+);
 
 export default OrderHistoryPage;

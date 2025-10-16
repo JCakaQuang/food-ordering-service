@@ -31,7 +31,6 @@ const Navigation = () => {
   const profileMenuItems: MenuProps['items'] = user ? [
     {
       key: 'profile',
-      // **ĐIỀU HƯỚNG CHÍNH XÁC:** Dựa vào vai trò để dẫn đến trang profile tương ứng
       label: <Link href={user.role?.toLowerCase() === 'admin' ? '/admin/profile' : '/profile'}>
         Thông tin cá nhân
       </Link>,
@@ -44,21 +43,16 @@ const Navigation = () => {
     },
   ] : [];
 
-  // **CẢI TIẾN 2: Logic chọn menu rõ ràng hơn**
   const getMenuItems = () => {
-    // Luôn kiểm tra loading trước
     if (loading) return [];
     
-    // Nếu có user, kiểm tra vai trò
     if (user) {
-      // Dùng toLowerCase() để không phân biệt chữ hoa/thường
       if (user.role?.toLowerCase() === 'admin') {
         return adminMenuItems;
       }
       return userNavLinks;
     }
     
-    // Mặc định không hiển thị menu nào nếu chưa đăng nhập
     return [];
   };
 
@@ -71,7 +65,7 @@ const Navigation = () => {
       borderBottom: '1px solid #f0f0f0' 
     }}>
       <div className="logo" style={{ color: 'black', marginRight: '24px', fontWeight: 'bold', fontSize: '20px' }}>
-        <Link href="/">FoodApp</Link>
+        <Link href="/">FoodLighting</Link>
       </div>
       <Menu
         theme="light"

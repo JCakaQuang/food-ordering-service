@@ -13,12 +13,11 @@ const RegisterPage: React.FC = () => {
   const [form] = Form.useForm();
 
   const onFinish = async (values: any) => {
-    // --- SỬA LỖI Ở ĐÂY ---
-    // Loại bỏ trường `confirm` trước khi gửi lên API
+
     const { confirm, ...registerData } = values;
 
     try {
-      // Gửi đi dữ liệu đã được làm sạch
+
       await register(registerData); 
       message.success('Đăng ký thành công! Vui lòng đăng nhập.');
       router.push('/auth/login');

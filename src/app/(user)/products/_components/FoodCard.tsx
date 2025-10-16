@@ -54,7 +54,6 @@ const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
         )
       }
     >
-      {/* <-- BƯỚC 2: HIỂN THỊ TAG "HẾT HÀNG" NẾU isOutOfStock LÀ TRUE */}
       {isOutOfStock && (
         <Tag color="red" style={{ position: 'absolute', top: 16, right: 16 }}>
           Hết hàng
@@ -65,8 +64,6 @@ const FoodCard: React.FC<FoodCardProps> = ({ food }) => {
         <Typography.Title level={5} style={{ minHeight: 48 }}>
           {food.name}
         </Typography.Title>
-        
-        {/* Cải thiện hiển thị số lượng tồn kho */}
         <Typography.Paragraph type="secondary">
           Số lượng còn lại: {food.quantity}
         </Typography.Paragraph>

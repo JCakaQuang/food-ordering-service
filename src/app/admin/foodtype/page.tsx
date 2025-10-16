@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios'; // 1. Import axios
 import { Table, Button, Space, message, Popconfirm, TablePaginationConfig, TableProps } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 interface FoodType {
     _id: string;
@@ -15,30 +15,43 @@ interface FoodType {
 const FoodtypeListPage = () => {
     const [foodtypes, setFoodtypes] = useState<FoodType[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
-
     const [pagination, setPagination] = useState<TablePaginationConfig>({
         current: 1,
         pageSize: 10,
         total: 0,
     });
 
-    const fetchData = async (paginationParams: TablePaginationConfig = {}) => {
+    const fetchData = async (paginationParams: TablePaginationConfig = pagination) => {
         setIsLoading(true);
         const { current = 1, pageSize = 10 } = paginationParams;
-        try {
-            const response = await fetch(`http://localhost:8080/api/v1/foodtype?current=${current}&pageSize=${pageSize}`); // API lấy danh sách
-            const result = await response.json();
-            setFoodtypes(result.data);
 
-            setPagination(prev => ({
-                ...prev,
+        try {
+            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/foodtype`;
+            // axios cho phép truyền params một cách rõ ràng
+            const response = await axios.get(apiUrl, {
+                params: { current, pageSize }
+            });
+
+            interface ApiResponse {
+                data: FoodType[];
+                meta: {
+                    current: number;
+                    pageSize: number;
+                    total: number;
+                };
+            }
+
+            const result = response.data as ApiResponse;
+
+            setFoodtypes(result.data);
+            setPagination({
                 current: result.meta.current,
                 pageSize: result.meta.pageSize,
                 total: result.meta.total,
-            }));
+            });
         } catch (error) {
-            message.error("Không thể tải danh sách.");
+            console.error("Lỗi khi tải danh sách:", error);
+            message.error("Không thể tải danh sách loại món ăn.");
         } finally {
             setIsLoading(false);
         }
@@ -46,27 +59,28 @@ const FoodtypeListPage = () => {
 
     useEffect(() => {
         fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // 3. Cập nhật hàm handleDelete để dùng axios
     const handleDelete = async (id: string) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/v1/foodtype/${id}`, {
-                method: 'DELETE',
-            });
-            if (!response.ok) throw new Error("Xóa thất bại.");
+            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/foodtype/${id}`;
+            await axios.delete(apiUrl); // Sử dụng axios.delete
+
             message.success("Xóa thành công!");
-            fetchData(); // Tải lại dữ liệu sau khi xóa
+            // Tải lại dữ liệu ở trang hiện tại sau khi xóa
+            fetchData(pagination);
         } catch (error: any) {
-            message.error(error.message);
+            console.error("Lỗi khi xóa:", error);
+            const errorMessage = error.response?.data?.message || "Xóa thất bại.";
+            message.error(errorMessage);
         }
     };
 
     const handleTableChange: TableProps<FoodType>['onChange'] = (newPagination) => {
-            fetchData({
-                current: newPagination.current,
-                pageSize: newPagination.pageSize,
-            });
-        };
+        fetchData(newPagination);
+    };
 
     const columns = [
         { title: 'Tên loại', dataIndex: 'name', key: 'name' },

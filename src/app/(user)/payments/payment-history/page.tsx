@@ -4,10 +4,10 @@ import React, { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/app/context/AuthContext';
 import axios from 'axios';
-import { Card, Typography, Spin, Table, Tag, message } from 'antd';
+import { Card, Typography, Spin, Table, Tag, App } from 'antd';
 
 const { Title, Text } = Typography;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 interface Payment {
   _id: string;
@@ -22,30 +22,37 @@ const PaymentHistoryContent = () => {
   const { user } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
-
-  console.log('User ID đang đăng nhập:', user);
+  const { message } = App.useApp();
 
   useEffect(() => {
-    if (user?._id) {
-      const fetchPayments = async () => {
-        try {
-          const response = await axios.get<Payment[]>(`${API_URL}/payment/user/${user._id}`);
-          setPayments(response.data);
-        } catch (error) {
-          message.error('Lỗi khi tải lịch sử thanh toán');
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchPayments();
+    if (!user?._id) {
+        setLoading(false);
+        return;
     }
-  }, [user]);
+    
+    const fetchPayments = async () => {
+      try {
+        const response = await axios.get<Payment[]>(`${API_URL}/payment/user/${user._id}`);
+        // 4. Thêm fallback `|| []` để đảm bảo `response.data` luôn là một mảng
+        setPayments(response.data || []);
+      } catch (error) {
+        console.error("Lỗi khi tải lịch sử thanh toán:", error);
+        message.error('Lỗi khi tải lịch sử thanh toán. Vui lòng thử lại.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayments();
+    
+  }, [user, message]);
 
   const columns = [
     {
       title: 'Mã Đơn hàng',
       dataIndex: 'order_id',
       key: 'order_id',
+      render: (text: string) => <Text copyable>{text}</Text>
     },
     {
       title: 'Số tiền',
@@ -59,8 +66,7 @@ const PaymentHistoryContent = () => {
       key: 'method',
       render: (method: string) => {
         let text = 'Tiền mặt';
-        if (method === 'momo') text = 'Momo';
-        if (method === 'credit_card') text = 'Thẻ tín dụng';
+        if (method === 'cash_on_delivery') text = 'Thanh toán khi nhận hàng';
         return <Text>{text}</Text>;
       },
     },
@@ -95,6 +101,7 @@ const PaymentHistoryContent = () => {
           columns={columns}
           rowKey="_id"
           pagination={{ pageSize: 10 }}
+          scroll={{ x: true }}
         />
       </Card>
     </div>

@@ -47,21 +47,19 @@ const UpdateUserPage = () => {
         }
     }, [router]);
 
-    // Fetch dữ liệu bằng SWR, chỉ fetch khi có ID và token
     const { data: initialData, error, isLoading } = useSWR(
-        id && token ? [`http://localhost:8080/api/v1/users/${id}`, token] : null,
+        id && token ? [`http://localhost:8000/api/v1/users/${id}`, token] : null,
         fetcher
     );
 
     const handleUpdate = async (values: any) => {
-        // Nếu password rỗng, không gửi nó trong payload để tránh ghi đè mật khẩu cũ
         if (!values.password) {
             delete values.password;
         }
 
         setIsSubmitting(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/v1/users/${id}`, {
+            const response = await fetch(`http://localhost:8000/api/v1/users/${id}`, {
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json',
